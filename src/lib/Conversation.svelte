@@ -15,7 +15,15 @@
 
             // Start the conversation session
             conversation = await Conversation.startSession({
-                agentId: 'cwpy6HtdtlwBCNspFhvB', // Replace with your agent ID
+                agentId: 'cQD1zztPAFfTjBcXIdd8',
+                overrides: {
+                    agent: {
+                        language:"hi"
+                    },
+                    tts: {
+                        voiceId: "1qEiC6qsybMkmnNdVMbK"
+                    }
+                },
                 onConnect: () => {
                     connectionStatus = 'Connected';
                 },
