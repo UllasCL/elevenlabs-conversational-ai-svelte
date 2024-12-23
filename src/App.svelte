@@ -4,6 +4,5 @@
 
 
 <main>
-  <h1>SM AI Agent</h1>
   <Conversation />
 </main>

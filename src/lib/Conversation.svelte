@@ -133,12 +133,6 @@
 </style>
 
 <div class="container">
-    <div class="status">
-        <strong>Connection Status:</strong> {connectionStatus}
-    </div>
-    <div class="status">
-        <strong>Agent Status:</strong> {agentStatus}
-    </div>
     <div class="buttons">
         <button on:click={startConversation} disabled={connectionStatus === 'Connected'}>
             Start Conversation
