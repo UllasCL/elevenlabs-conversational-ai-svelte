@@ -7,15 +7,29 @@
     let agentStatus = 'Idle';
     let conversation = null;
 
+    // Language selection state
+    let selectedLanguage = 'en'; // Default language set to English
+
+    // Define available languages
+    const languages = [
+        { id: 'en', name: 'English' },
+        { id: 'hi', name: 'Hindi' }
+    ];
+
     // Function to start the conversation
     async function startConversation() {
         try {
             // Request microphone permission
             await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            // Start the conversation session
+            // Start the conversation session with the selected language
             conversation = await Conversation.startSession({
                 agentId: 'cQD1zztPAFfTjBcXIdd8',
+                overrides: {
+                    agent: {
+                        language: selectedLanguage,  // Dynamically set language
+                    },
+                },
                 onConnect: () => {
                     connectionStatus = 'Connected';
                 },
@@ -30,7 +44,7 @@
                 },
             });
 
-            // Update UI state after successful connection
+            // Additional UI updates can be handled here if necessary
         } catch (error) {
             console.error('Failed to start conversation:', error);
         }
@@ -43,6 +57,19 @@
             conversation = null;
             connectionStatus = 'Disconnected';
             agentStatus = 'Idle';
+        }
+    }
+
+    // Function to handle language changes
+    async function handleLanguageChange(event) {
+        const newLanguage = event.target.value;
+        if (newLanguage !== selectedLanguage) {
+            selectedLanguage = newLanguage;
+            if (conversation) {
+                // Restart the conversation with the new language
+                await stopConversation();
+                await startConversation();
+            }
         }
     }
 
@@ -75,6 +102,22 @@
 
     .status strong {
         color: #333;
+    }
+
+    /* Language Selector Styling */
+    .language-selector {
+        margin-bottom: 1.5rem;
+    }
+
+    select {
+        padding: 0.5rem;
+        font-size: 1rem;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        width: 100%;
+        max-width: 200px;
+        margin: 0 auto;
+        display: block;
     }
 
     /* Button Styling */
@@ -129,10 +172,26 @@
         .status {
             font-size: 1rem;
         }
+
+        select {
+            font-size: 0.9rem;
+            padding: 0.4rem;
+        }
     }
 </style>
 
 <div class="container">
+
+    <!-- Language Selector -->
+    <div class="language-selector">
+        <select id="language" bind:value={selectedLanguage} on:change={handleLanguageChange}>
+            {#each languages as lang}
+                <option value={lang.id}>{lang.name}</option>
+            {/each}
+        </select>
+    </div>
+
+    <!-- Conversation Control Buttons -->
     <div class="buttons">
         <button on:click={startConversation} disabled={connectionStatus === 'Connected'}>
             Start Conversation
