@@ -1,6 +1,6 @@
 <script>
-    import { onDestroy } from 'svelte';
-    import { Conversation } from '@11labs/client';
+    import {onDestroy} from 'svelte';
+    import {Conversation} from '@11labs/client';
 
     // Reactive variables for UI state
     let connectionStatus = 'Disconnected';
@@ -12,19 +12,29 @@
 
     // Define available languages
     const languages = [
-        { id: 'en', name: 'English' },
-        { id: 'hi', name: 'Hindi' }
+        {id: 'en', name: 'English'},
+        {id: 'hi', name: 'Hindi'}
     ];
+
+    async function getSignedUrl() {
+        const response = await fetch('https://uat-arise.gonuclei.com/elevenlabs/token');
+        if (!response.ok) {
+            throw new Error(`Failed to get signed url: ${response.statusText}`);
+        }
+        return await response.json();
+    }
 
     // Function to start the conversation
     async function startConversation() {
         try {
+            const data = await getSignedUrl();
             // Request microphone permission
-            await navigator.mediaDevices.getUserMedia({ audio: true });
+            await navigator.mediaDevices.getUserMedia({audio: true});
 
             // Start the conversation session with the selected language
             conversation = await Conversation.startSession({
-                agentId: 'cQD1zztPAFfTjBcXIdd8',
+                signedUrl: data.signedUrl,
+                agentId:  data.agentId,
                 overrides: {
                     agent: {
                         language: selectedLanguage,  // Dynamically set language
@@ -63,9 +73,13 @@
     // Function to handle language changes
     async function handleLanguageChange(event) {
         const newLanguage = event.target.value;
+        console.log("language change", {newLanguage}, {selectedLanguage})
+
         if (newLanguage !== selectedLanguage) {
             selectedLanguage = newLanguage;
+            console.log("conversation 1", {conversation})
             if (conversation) {
+                console.log("conversation", {conversation})
                 // Restart the conversation with the new language
                 await stopConversation();
                 await startConversation();
@@ -182,14 +196,14 @@
 
 <div class="container">
 
-    <!-- Language Selector -->
-    <div class="language-selector">
-        <select id="language" bind:value={selectedLanguage} on:change={handleLanguageChange}>
-            {#each languages as lang}
-                <option value={lang.id}>{lang.name}</option>
-            {/each}
-        </select>
-    </div>
+        <!-- Language Selector -->
+        <div class="language-selector">
+            <select id="language" bind:value={selectedLanguage} on:change={handleLanguageChange}>
+                {#each languages as lang}
+                    <option value={lang.id}>{lang.name}</option>
+                {/each}
+            </select>
+        </div>
 
     <!-- Conversation Control Buttons -->
     <div class="buttons">
