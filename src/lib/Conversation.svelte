@@ -1,6 +1,9 @@
 <script>
     import {onDestroy} from 'svelte';
     import {Conversation} from '@11labs/client';
+    import Background from './Background.svelte';
+    import MicButton from './MicButton.svelte';
+    import Header from './Header.svelte';
 
     // Reactive variables for UI state
     let connectionStatus = 'Disconnected';
@@ -12,7 +15,7 @@
     let submitting = false;
 
     // Language selection state
-    let selectedLanguage = 'en'; // Default language set to English
+    let selectedLanguage = 'en';
 
     // Define available languages
     const languages = [
@@ -28,20 +31,25 @@
         return await response.json();
     }
 
-    // Function to start the conversation
+    async function toggleConversation() {
+        if (connectionStatus === 'Connected') {
+            await stopConversation();
+        } else {
+            await startConversation();
+        }
+    }
+
     async function startConversation() {
         try {
             const data = await getSignedUrl();
-            // Request microphone permission
             await navigator.mediaDevices.getUserMedia({audio: true});
 
-            // Start the conversation session with the selected language
             conversation = await Conversation.startSession({
                 signedUrl: data.signedUrl,
-                agentId:  data.agentId,
+                agentId: data.agentId,
                 overrides: {
                     agent: {
-                        language: selectedLanguage,  // Dynamically set language
+                        language: selectedLanguage,
                     },
                 },
                 onConnect: () => {
@@ -59,14 +67,11 @@
             });
             conversationId = conversation.getId();
             showEmailForm = false;
-
-            // Additional UI updates can be handled here if necessary
         } catch (error) {
             console.error('Failed to start conversation:', error);
         }
     }
 
-    // Function to stop the conversation
     async function stopConversation() {
         if (conversation) {
             await conversation.endSession();
@@ -77,17 +82,11 @@
         }
     }
 
-    // Function to handle language changes
     async function handleLanguageChange(event) {
         const newLanguage = event.target.value;
-        console.log("language change", {newLanguage}, {selectedLanguage})
-
         if (newLanguage !== selectedLanguage) {
             selectedLanguage = newLanguage;
-            console.log("conversation 1", {conversation})
             if (conversation) {
-                console.log("conversation", {conversation})
-                // Restart the conversation with the new language
                 await stopConversation();
                 await startConversation();
             }
@@ -99,7 +98,7 @@
 
         submitting = true;
         try {
-            const response = await fetch(`https://uat-arise.gonuclei.com/elevenlabs/conversation?conversation_id=${conversationId}&email=${encodeURIComponent(email)}`, {
+            const response = await fetch(`http://127.0.0.1:8000/elevenlabs/conversation?conversation_id=${conversationId}&email=${encodeURIComponent(email)}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -110,7 +109,6 @@
                 throw new Error('Failed to submit email');
             }
 
-            // Clear form after successful submission
             email = '';
             showEmailForm = false;
         } catch (error) {
@@ -120,7 +118,6 @@
         }
     }
 
-    // Cleanup on component destroy
     onDestroy(() => {
         if (conversation) {
             conversation.endSession();
@@ -129,111 +126,140 @@
 </script>
 
 <style>
-    /* Container Styling */
+    .main-content {
+        padding-top: 5rem;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .hero {
+        text-align: center;
+        color: white;
+        margin-bottom: 2rem;
+        padding: 2rem;
+    }
+
+    .hero h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.8);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
     .container {
         max-width: 400px;
-        margin: 2rem auto;
+        margin: 0 auto;
         padding: 2rem;
         border-radius: 12px;
-        background: #f9f9f9;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         text-align: center;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    /* Status Display Styling */
-    .status {
-        margin-bottom: 1.5rem;
-        font-size: 1.1rem;
-    }
-
-    .status strong {
-        color: #333;
-    }
-
-    /* Language Selector Styling */
     .language-selector {
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
     }
 
     select {
         padding: 0.5rem;
         font-size: 1rem;
         border-radius: 6px;
-        border: 1px solid #ccc;
+        border: 1px solid rgba(255, 255, 255, 0.2);
         width: 100%;
         max-width: 200px;
         margin: 0 auto;
         display: block;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        backdrop-filter: blur(5px);
     }
 
-    /* Button Styling */
-    .buttons {
+    select option {
+        background: #1e293b;
+        color: white;
+    }
+
+    .mic-container {
         display: flex;
         justify-content: center;
-        gap: 1rem;
+        margin: 2rem 0;
     }
 
-    button {
-        flex: 1;
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
-        font-weight: 600;
-        color: #fff;
-        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    button:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    button:active:not(:disabled) {
-        transform: translateY(0);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    button:disabled {
-        background: #ccc;
-        cursor: not-allowed;
-        box-shadow: none;
-        transform: none;
-    }
-
-    /* Email Form Styling */
     .email-form {
         margin-top: 2rem;
         padding: 1rem;
-        border-top: 1px solid #eee;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .email-form h3 {
+        color: white;
+        margin-bottom: 1rem;
     }
 
     .email-input {
         width: 100%;
         padding: 0.5rem;
         margin-bottom: 1rem;
-        border: 1px solid #ccc;
+        border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 4px;
         font-size: 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        backdrop-filter: blur(5px);
     }
 
-    /* Responsive Design */
+    .email-input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .submit-button {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: white;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(168, 85, 247, 0.8));
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        backdrop-filter: blur(5px);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .submit-button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .submit-button:disabled {
+        background: rgba(156, 163, 175, 0.5);
+        cursor: not-allowed;
+    }
+
     @media (max-width: 500px) {
+        .hero h1 {
+            font-size: 2rem;
+        }
+
+        .hero p {
+            font-size: 1rem;
+        }
+
         .container {
             padding: 1.5rem;
-        }
-
-        button {
-            font-size: 0.9rem;
-            padding: 0.6rem 0.8rem;
-        }
-
-        .status {
-            font-size: 1rem;
+            margin: 1rem;
         }
 
         select {
@@ -243,43 +269,49 @@
     }
 </style>
 
-<div class="container">
-    <!-- Language Selector -->
-    <div class="language-selector">
-        <select id="language" bind:value={selectedLanguage} on:change={handleLanguageChange}>
-            {#each languages as lang}
-                <option value={lang.id}>{lang.name}</option>
-            {/each}
-        </select>
+<Background/>
+<Header/>
+
+<div class="main-content">
+    <div class="hero">
+        <h1>Voice Assistant</h1>
+        <p>Start a conversation with our AI-powered voice assistant</p>
     </div>
 
-    <!-- Conversation Control Buttons -->
-    <div class="buttons">
-        <button on:click={startConversation} disabled={connectionStatus === 'Connected'}>
-            Start Conversation
-        </button>
-        <button on:click={stopConversation} disabled={connectionStatus !== 'Connected'}>
-            Stop Conversation
-        </button>
-    </div>
-
-    <!-- Email Collection Form -->
-    {#if showEmailForm}
-        <div class="email-form">
-            <h3>Please provide your email to get the conversation</h3>
-            <input
-                    type="email"
-                    class="email-input"
-                    placeholder="Enter your email"
-                    bind:value={email}
-                    disabled={submitting}
-            />
-            <button
-                    on:click={handleEmailSubmit}
-                    disabled={!email || submitting}
-            >
-                {submitting ? 'Submitting...' : 'Submit'}
-            </button>
+    <div class="container">
+        <div class="language-selector">
+            <select id="language" bind:value={selectedLanguage} on:change={handleLanguageChange}>
+                {#each languages as lang}
+                    <option value={lang.id}>{lang.name}</option>
+                {/each}
+            </select>
         </div>
-    {/if}
+
+        <div class="mic-container">
+            <MicButton
+                    isActive={connectionStatus === 'Connected'}
+                    onClick={toggleConversation}
+            />
+        </div>
+
+        {#if showEmailForm}
+            <div class="email-form">
+                <h3>Please provide your email</h3>
+                <input
+                        type="email"
+                        class="email-input"
+                        placeholder="Enter your email"
+                        bind:value={email}
+                        disabled={submitting}
+                />
+                <button
+                        class="submit-button"
+                        on:click={handleEmailSubmit}
+                        disabled={!email || submitting}
+                >
+                    {submitting ? 'Submitting...' : 'Submit'}
+                </button>
+            </div>
+        {/if}
+    </div>
 </div>
