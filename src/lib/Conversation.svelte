@@ -6,6 +6,10 @@
     let connectionStatus = 'Disconnected';
     let agentStatus = 'Idle';
     let conversation = null;
+    let conversationId = null;
+    let showEmailForm = false;
+    let email = '';
+    let submitting = false;
 
     // Language selection state
     let selectedLanguage = 'en'; // Default language set to English
@@ -53,6 +57,8 @@
                     agentStatus = mode.mode === 'speaking' ? 'Speaking' : 'Listening';
                 },
             });
+            conversationId = conversation.getId();
+            showEmailForm = false;
 
             // Additional UI updates can be handled here if necessary
         } catch (error) {
@@ -67,6 +73,7 @@
             conversation = null;
             connectionStatus = 'Disconnected';
             agentStatus = 'Idle';
+            showEmailForm = true;
         }
     }
 
@@ -84,6 +91,32 @@
                 await stopConversation();
                 await startConversation();
             }
+        }
+    }
+
+    async function handleEmailSubmit() {
+        if (!email || !conversationId) return;
+
+        submitting = true;
+        try {
+            const response = await fetch(`https://uat-arise.gonuclei.com/elevenlabs/conversation?conversation_id=${conversationId}&email=${encodeURIComponent(email)}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to submit email');
+            }
+
+            // Clear form after successful submission
+            email = '';
+            showEmailForm = false;
+        } catch (error) {
+            console.error('Error submitting email:', error);
+        } finally {
+            submitting = false;
         }
     }
 
@@ -172,6 +205,22 @@
         transform: none;
     }
 
+    /* Email Form Styling */
+    .email-form {
+        margin-top: 2rem;
+        padding: 1rem;
+        border-top: 1px solid #eee;
+    }
+
+    .email-input {
+        width: 100%;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
     /* Responsive Design */
     @media (max-width: 500px) {
         .container {
@@ -195,15 +244,14 @@
 </style>
 
 <div class="container">
-
-        <!-- Language Selector -->
-        <div class="language-selector">
-            <select id="language" bind:value={selectedLanguage} on:change={handleLanguageChange}>
-                {#each languages as lang}
-                    <option value={lang.id}>{lang.name}</option>
-                {/each}
-            </select>
-        </div>
+    <!-- Language Selector -->
+    <div class="language-selector">
+        <select id="language" bind:value={selectedLanguage} on:change={handleLanguageChange}>
+            {#each languages as lang}
+                <option value={lang.id}>{lang.name}</option>
+            {/each}
+        </select>
+    </div>
 
     <!-- Conversation Control Buttons -->
     <div class="buttons">
@@ -214,4 +262,24 @@
             Stop Conversation
         </button>
     </div>
+
+    <!-- Email Collection Form -->
+    {#if showEmailForm}
+        <div class="email-form">
+            <h3>Please provide your email to get the conversation</h3>
+            <input
+                    type="email"
+                    class="email-input"
+                    placeholder="Enter your email"
+                    bind:value={email}
+                    disabled={submitting}
+            />
+            <button
+                    on:click={handleEmailSubmit}
+                    disabled={!email || submitting}
+            >
+                {submitting ? 'Submitting...' : 'Submit'}
+            </button>
+        </div>
+    {/if}
 </div>
