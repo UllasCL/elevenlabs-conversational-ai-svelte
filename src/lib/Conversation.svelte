@@ -5,8 +5,9 @@
     import MicButton from './MicButton.svelte';
     import Header from './Header.svelte';
     import LanguageSelector from './LanguageSelector.svelte';
+    import Timer from './Timer.svelte';
 
-
+    let isTimerActive = false;
     // Reactive variables for UI state
     let connectionStatus = 'Disconnected';
     let agentStatus = 'Idle';
@@ -56,12 +57,15 @@
                 },
                 onConnect: () => {
                     connectionStatus = 'Connected';
+                    isTimerActive = true;
                 },
                 onDisconnect: () => {
                     connectionStatus = 'Disconnected';
+                    isTimerActive = false;
                 },
                 onError: (error) => {
                     console.error('Error:', error);
+                    isTimerActive = false;
                 },
                 onModeChange: (mode) => {
                     agentStatus = mode.mode === 'speaking' ? 'Speaking' : 'Listening';
@@ -71,6 +75,7 @@
             showEmailForm = false;
         } catch (error) {
             console.error('Failed to start conversation:', error);
+            isTimerActive = false;
         }
     }
 
@@ -81,6 +86,7 @@
             connectionStatus = 'Disconnected';
             agentStatus = 'Idle';
             showEmailForm = true;
+            isTimerActive = false;
         }
     }
 
@@ -118,6 +124,11 @@
         } finally {
             submitting = false;
         }
+    }
+
+    function handleTimerTimeout() {
+        stopConversation();
+        showEmailForm = true;
     }
 
     onDestroy(() => {
@@ -196,7 +207,8 @@
 
     .mic-container {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        align-items: center;
         margin: 2rem 0;
     }
 
@@ -289,6 +301,10 @@
             <MicButton
                     isActive={connectionStatus === 'Connected'}
                     onClick={toggleConversation}
+            />
+            <Timer
+                    isActive={isTimerActive}
+                    onTimeout={handleTimerTimeout}
             />
         </div>
 
