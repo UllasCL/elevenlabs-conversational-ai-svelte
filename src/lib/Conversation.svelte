@@ -6,6 +6,7 @@
     import Header from './Header.svelte';
     import LanguageSelector from './LanguageSelector.svelte';
     import Timer from './Timer.svelte';
+    import AnimatedBackground from './AnimatedBackground.svelte';
 
     let isTimerActive = false;
     // Reactive variables for UI state
@@ -17,7 +18,16 @@
     let email = '';
     let submitting = false;
     let showControls = true;
+    let backgroundMode = 'idle';
 
+
+    $: {
+        if (connectionStatus === 'Connected') {
+            backgroundMode = agentStatus === 'Speaking' ? 'bot' : 'user';
+        } else {
+            backgroundMode = 'idle';
+        }
+    }
 
     // Language selection state
     let selectedLanguage = 'en';
@@ -288,7 +298,7 @@
     }
 </style>
 
-<Background/>
+<AnimatedBackground mode={backgroundMode}/>
 <Header/>
 
 <div class="main-content">
