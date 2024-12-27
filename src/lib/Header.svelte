@@ -6,7 +6,7 @@
 <header class="header">
     <div class="header-content">
         <div class="logo-section">
-            <h1 class="logo">Voice Assistant</h1>
+            <h1 class="logo">Prawan AI Assistant</h1>
         </div>
 
         <div class="right-section">

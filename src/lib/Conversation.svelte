@@ -4,6 +4,8 @@
     import Background from './Background.svelte';
     import MicButton from './MicButton.svelte';
     import Header from './Header.svelte';
+    import LanguageSelector from './LanguageSelector.svelte';
+
 
     // Reactive variables for UI state
     let connectionStatus = 'Disconnected';
@@ -98,7 +100,7 @@
 
         submitting = true;
         try {
-            const response = await fetch(`http://127.0.0.1:8000/elevenlabs/conversation?conversation_id=${conversationId}&email=${encodeURIComponent(email)}`, {
+            const response = await fetch(`https://uat-arise.gonuclei.com/elevenlabs/conversation?conversation_id=${conversationId}&email=${encodeURIComponent(email)}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -274,18 +276,14 @@
 
 <div class="main-content">
     <div class="hero">
-        <h1>Voice Assistant</h1>
         <p>Start a conversation with our AI-powered voice assistant</p>
     </div>
 
     <div class="container">
-        <div class="language-selector">
-            <select id="language" bind:value={selectedLanguage} on:change={handleLanguageChange}>
-                {#each languages as lang}
-                    <option value={lang.id}>{lang.name}</option>
-                {/each}
-            </select>
-        </div>
+        <LanguageSelector
+                selectedLanguage={selectedLanguage}
+                onLanguageChange={handleLanguageChange}
+        />
 
         <div class="mic-container">
             <MicButton
