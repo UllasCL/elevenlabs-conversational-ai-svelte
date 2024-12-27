@@ -16,6 +16,8 @@
     let showEmailForm = false;
     let email = '';
     let submitting = false;
+    let showControls = true;
+
 
     // Language selection state
     let selectedLanguage = 'en';
@@ -79,17 +81,6 @@
         }
     }
 
-    async function stopConversation() {
-        if (conversation) {
-            await conversation.endSession();
-            conversation = null;
-            connectionStatus = 'Disconnected';
-            agentStatus = 'Idle';
-            showEmailForm = true;
-            isTimerActive = false;
-        }
-    }
-
     async function handleLanguageChange(event) {
         const newLanguage = event.target.value;
         if (newLanguage !== selectedLanguage) {
@@ -98,6 +89,24 @@
                 await stopConversation();
                 await startConversation();
             }
+        }
+    }
+
+    function handleTimerTimeout() {
+        stopConversation();
+        showEmailForm = true;
+    }
+
+
+    async function stopConversation() {
+        if (conversation) {
+            await conversation.endSession();
+            conversation = null;
+            connectionStatus = 'Disconnected';
+            agentStatus = 'Idle';
+            showEmailForm = true;
+            isTimerActive = false;
+            showControls = false; // Hide controls when conversation stops
         }
     }
 
@@ -119,16 +128,12 @@
 
             email = '';
             showEmailForm = false;
+            showControls = true; // Show controls after email submission
         } catch (error) {
             console.error('Error submitting email:', error);
         } finally {
             submitting = false;
         }
-    }
-
-    function handleTimerTimeout() {
-        stopConversation();
-        showEmailForm = true;
     }
 
     onDestroy(() => {
@@ -292,21 +297,23 @@
     </div>
 
     <div class="container">
-        <LanguageSelector
-                selectedLanguage={selectedLanguage}
-                onLanguageChange={handleLanguageChange}
-        />
+        {#if showControls}
+            <LanguageSelector
+                    selectedLanguage={selectedLanguage}
+                    onLanguageChange={handleLanguageChange}
+            />
 
-        <div class="mic-container">
-            <MicButton
-                    isActive={connectionStatus === 'Connected'}
-                    onClick={toggleConversation}
-            />
-            <Timer
-                    isActive={isTimerActive}
-                    onTimeout={handleTimerTimeout}
-            />
-        </div>
+            <div class="mic-container">
+                <MicButton
+                        isActive={connectionStatus === 'Connected'}
+                        onClick={toggleConversation}
+                />
+                <Timer
+                        isActive={isTimerActive}
+                        onTimeout={handleTimerTimeout}
+                />
+            </div>
+        {/if}
 
         {#if showEmailForm}
             <div class="email-form">
